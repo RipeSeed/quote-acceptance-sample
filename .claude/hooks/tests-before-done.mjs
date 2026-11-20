@@ -22,6 +22,9 @@ if (!touchesCode && !touchesSql) process.exit(0);
 
 const cwd = projectDir(input);
 
+// Same CLI version as CI when it is not installed globally.
+const supabase = onPath('supabase') ? ['supabase'] : ['npx', '--yes', 'supabase@3.1.0'];
+
 if (touchesCode) {
   run('npm', ['test', '--silent'], 'Vitest');
 }
@@ -30,7 +33,16 @@ if (touchesSql) {
   if (!supabaseRunning()) {
     block('Migrations or pgTAP tests changed, but the local database is not running. Run `supabase db start`, then `supabase test db`, before finishing.');
   }
-  run('supabase', ['test', 'db'], 'pgTAP');
+  run(supabase[0], [...supabase.slice(1), 'test', 'db'], 'pgTAP');
+}
+
+function onPath(command) {
+  try {
+    execSync(`command -v ${command}`, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function run(command, args, label) {
@@ -44,7 +56,7 @@ function run(command, args, label) {
 
 function supabaseRunning() {
   try {
-    execSync('supabase status', { cwd, stdio: 'ignore' });
+    execFileSync(supabase[0], [...supabase.slice(1), 'status'], { cwd, stdio: 'ignore' });
     return true;
   } catch {
     return false;
