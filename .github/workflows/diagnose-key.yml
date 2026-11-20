@@ -1,0 +1,18 @@
+name: Diagnose API key
+on: pull_request
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          K: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "key length=${#K}"
+          if [[ "$K" =~ [[:space:]] ]]; then echo "key contains whitespace or a newline"; fi
+          for m in claude-opus-5-5 claude-sonnet-5-5 claude-haiku-5-5; do
+            printf '%s: ' "$m"
+            curl -s https://api.anthropic.com/v1/messages \
+              -H "x-api-key: $K" -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
+              -d "{\"model\":\"$m\",\"max_tokens\":8,\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}]}" \
+              | jq -c '{type, error: .error}'
+          done
