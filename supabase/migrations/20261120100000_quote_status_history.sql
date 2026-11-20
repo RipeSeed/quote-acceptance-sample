@@ -10,6 +10,9 @@ create table public.quote_status_events (
 create index quote_status_events_quote_id_idx
   on public.quote_status_events (quote_id, changed_at);
 
+create index quote_status_events_changed_by_idx
+  on public.quote_status_events (changed_by);
+
 alter table public.quote_status_events enable row level security;
 
 revoke all on public.quote_status_events from anon, authenticated;
@@ -20,7 +23,8 @@ create policy "Office can read quote status events"
   using ((select public.current_staff_role()) in ('admin', 'office'));
 
 -- Security definer because clients have no insert grant on the events table:
--- this trigger is the only writer, so the history cannot be rewritten.
+-- this trigger is the only writer, so clients cannot add or change history.
+-- Events go only with their quote, and admins can delete draft quotes only.
 -- auth.uid() is null when the Edge Function accepts with the service role.
 create function public.log_quote_status_change()
 returns trigger

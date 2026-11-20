@@ -33,7 +33,7 @@ select results_eq(
     join public.quotes q on q.id = e.quote_id
     where q.quote_number = 'T-HISTORY'$$,
   $$values (null::text, 'draft'::text, '00000000-0000-4000-8000-0000000000a2'::uuid)$$,
-  'Creating a quote logs its first status and who created it'
+  'Office staff read the first event: draft, created by them'
 );
 
 update public.quotes set status = 'sent' where quote_number = 'T-HISTORY';
@@ -47,7 +47,7 @@ select results_eq(
     where q.quote_number = 'T-HISTORY'
     order by e.id$$,
   $$values (null::text, 'draft'::text), ('draft', 'sent')$$,
-  'Only real status changes are logged'
+  'Office staff read only real status changes'
 );
 
 select throws_ok(
