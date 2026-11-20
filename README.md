@@ -97,6 +97,23 @@ To reset the demo data, run `supabase db reset`.
 supabase stop
 ```
 
+## Working with Claude Code
+
+| File | What it does |
+| --- | --- |
+| `CLAUDE.md` | Project rules: commands, workflow (plan → branch → PR), definition of done |
+| `.claude/rules/database.md`, `edge-functions.md` | Detailed rules, loaded only when Claude works on matching paths |
+| `.claude/settings.json` | Allowed and denied commands, plus the hooks below |
+| `.claude/hooks/guard-files.mjs` | Blocks edits to migrations already on `main` and to `.env` files |
+| `.claude/hooks/guard-bash.mjs` | Blocks deploys from a laptop, pushes to `main`, force pushes, `--no-verify`, disabling RLS |
+| `.claude/hooks/check-migration.mjs` | After every migration edit: RLS on, `revoke all` first, a policy, a pgTAP test, `search_path` on security definer functions |
+| `.claude/hooks/typecheck.mjs` | Typechecks after every TypeScript edit |
+| `.claude/hooks/tests-before-done.mjs` | Claude cannot finish while Vitest or pgTAP fail for the files it changed |
+| `.claude/agents/rls-reviewer.md` | Subagent that reviews migrations for RLS and test gaps before a PR |
+| `.claude/commands/plan.md` | `/plan <topic>` writes `docs/plans/<topic>.md` before any migration |
+| `.mcp.json` | Supabase MCP server, read-only, on the dev project |
+| `.github/workflows/claude-review.yml` | Claude reviews every PR against the same rules and comments inline |
+
 ## Design notes
 
 - `accept_quote` locks the quote row (`select ... for update`) before checking it, so two clicks at the same time cannot both accept. The second one waits and then gets `already_accepted`.
